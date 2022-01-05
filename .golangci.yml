@@ -1,0 +1,20 @@
+linters:
+  enable:
+    - bodyclose
+    - errorlint
+    - exportloopref
+    - gci
+    - gocritic
+    - gofmt
+    - gosec
+    - makezero
+    - nilerr
+    - noctx
+    - sqlclosecheck
+    - stylecheck
+    - unconvert
+  disable:
+    - errcheck
+run:
+  build-tags:
+    - test
