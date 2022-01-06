@@ -102,7 +102,40 @@ the package from the main branch for this to work.
 Note that gRPC C (the `grpc` package) is deprecated and does not contains xDS support.
 
 ### Java
-TBD
+You need to add grpc-xds dependency along with the common grpc dependencies.
+
+```
+<dependency>
+	<groupId>io.grpc</groupId>
+	<artifactId>grpc-netty</artifactId>
+</dependency>
+<dependency>
+	<groupId>io.grpc</groupId>
+	<artifactId>grpc-protobuf</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.grpc</groupId>
+	<artifactId>grpc-services</artifactId>
+</dependency>
+<!-- xds protocol should work with this dependency -->
+<dependency>
+    <groupId>io.grpc</groupId>
+	<artifactId>grpc-xds</artifactId>
+	<scope>runtime</scope>
+</dependency>
+```
+
+Then a new channel can be created with xds protocol.
+```
+Grpc.newChannelBuilder("xds:///{service}.{namespace}:{port}", InsecureChannelCredentials.create());
+```
+
+Note: the serviceConfigLookUp should not be disabled otherwise the xds protocol does not works correctly.
+
+Since environment variable cannot be changed in java, there are 2 system properties which overrides the common bootstrap variables:- 
+* io.grpc.xds.bootstrap to override GRPC_XDS_BOOTSTRAP
+* io.grpc.xds.bootstrapConfig to override GRPC_XDS_BOOTSTRAP_CONFIG
+
 
 ## Virtual API Gateway
 
