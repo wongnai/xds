@@ -2,8 +2,10 @@ package debug
 
 import (
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/wongnai/xds/meter"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -31,6 +33,18 @@ func (s *Server) register() {
 	s.mux.HandleFunc("/_hc", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
+	exporter, err := meter.CreateExporter()
+	if err != nil {
+		panic(err)
+	}
+	s.mux.HandleFunc("/metrics", exporter.ServeHTTP)
+
+	s.mux.HandleFunc("/debug/pprof/", pprof.Index)
+	s.mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	s.mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	s.mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	s.mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
 	s.mux.HandleFunc("/", s.snapshot)
 }
 

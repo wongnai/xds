@@ -1,4 +1,4 @@
 /.bin/**
-/makefile.mk
 /cover.xml
 /cover.json
+/.idea

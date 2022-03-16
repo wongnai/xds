@@ -15,6 +15,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
+	"github.com/wongnai/xds/meter"
 	"github.com/wongnai/xds/snapshot/apigateway"
 	"google.golang.org/protobuf/types/known/anypb"
 	corev1 "k8s.io/api/core/v1"
@@ -43,15 +44,33 @@ func (s *Snapshotter) startServices(ctx context.Context) error {
 		},
 	}, &corev1.Service{}, store, s.ResyncPeriod)
 
-	emit = func() {
-		services := sliceToService(store.List())
-		version := reflector.LastSyncResourceVersion()
+	var lastSnapshotHash uint64
 
+	emit = func() {
+		version := reflector.LastSyncResourceVersion()
+		s.kubeEventCounter.Add(context.Background(), 1, meter.ResourceAttrKey.String("services"))
+
+		services := sliceToService(store.List())
 		resources := kubeServicesToResources(services)
-		apiGatewayResources := apigateway.FromKubeServices(services)
+		apiGatewayResources, apiGatewayStats := apigateway.FromKubeServices(services)
 		merged := append(resources, apiGatewayResources...) //nolint:gocritic
 
-		snapshot, err := cache.NewSnapshot(version, resourcesToMap(merged))
+		resourcesByType := resourcesToMap(merged)
+		s.setServiceResourcesByType(resourcesByType)
+		s.setAPIGatewayStats(apiGatewayStats)
+
+		hash, err := resourcesHash(merged)
+		if err == nil {
+			if hash == lastSnapshotHash {
+				klog.V(4).Info("new snapshot is equivalent to the previous one")
+				return
+			}
+			lastSnapshotHash = hash
+		} else {
+			klog.Errorf("fail to hash snapshot: %s", err)
+		}
+
+		snapshot, err := cache.NewSnapshot(version, resourcesByType)
 		if err != nil {
 			panic(err)
 		}

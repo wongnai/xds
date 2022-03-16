@@ -30,7 +30,7 @@ var nameRegex = regexp.MustCompile("^[a-z0-9][a-z0-9-]{0,63}$")
 // xds.lmwn.com/api-gateway: Comma-separated list of API Gateway virtual servers. Only alphanumeric characters and dash allowed
 // xds.lmwn.com/grpc-service: Comma-separated list of gRPC fully qualified service name (pkg.name.ServiceName)
 // and the service must have a port named "grpc"f
-func FromKubeServices(services []*v1.Service) []types.Resource {
+func FromKubeServices(services []*v1.Service) ([]types.Resource, map[string]int) {
 	routerConfigs := map[string]*routev3.RouteConfiguration{}
 	gateways := map[string]*listenerv3.Listener{}
 
@@ -109,7 +109,8 @@ outer:
 		}
 	}
 
-	out := []types.Resource{}
+	var out []types.Resource
+	stats := make(map[string]int)
 
 	for name, gateway := range gateways {
 		manager, _ := anypb.New(&managerv3.HttpConnectionManager{
@@ -131,11 +132,12 @@ outer:
 		}
 
 		out = append(out, gateway)
+		stats[gateway.Name] = len(routerConfigs[name].VirtualHosts[0].Routes)
 	}
 
 	for _, route := range routerConfigs {
 		out = append(out, route)
 	}
 
-	return out
+	return out, stats
 }
