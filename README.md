@@ -65,7 +65,7 @@ You'd need to set xDS bootstrap config on your application. Here's the xDS boots
 }
 ```
 
-Make sure to change `server_url` to wherever your application can access this xDS server. You then can supply this to
+Make sure to change `server_uri` to wherever your application can access this xDS server. You then can supply this to
 your application in two methods:
 
 - Put the entire JSON in `GRPC_XDS_BOOTSTRAP_CONFIG` environment variable
