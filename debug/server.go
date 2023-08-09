@@ -1,11 +1,11 @@
 package debug
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"net/http/pprof"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
-	"github.com/wongnai/xds/meter"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -33,11 +33,7 @@ func (s *Server) register() {
 	s.mux.HandleFunc("/_hc", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	})
-	exporter, err := meter.CreateExporter()
-	if err != nil {
-		panic(err)
-	}
-	s.mux.HandleFunc("/metrics", exporter.ServeHTTP)
+	s.mux.Handle("/metrics", promhttp.Handler())
 
 	s.mux.HandleFunc("/debug/pprof/", pprof.Index)
 	s.mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)

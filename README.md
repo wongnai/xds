@@ -4,7 +4,7 @@ A simple xDS server, distributing Kubernetes service endpoints to clients.
 
 It is designed for [gRPC](https://grpc.github.io/grpc/cpp/md_doc_grpc_xds_features.html).
 
-This software is in **alpha** stage.
+This software has been powering Wongnai and LINE MAN production since Q1 2022
 
 ## Why xDS?
 
@@ -65,7 +65,7 @@ You'd need to set xDS bootstrap config on your application. Here's the xDS boots
 }
 ```
 
-Make sure to change `server_url` to wherever your application can access this xDS server. You then can supply this to
+Make sure to change `server_uri` to wherever your application can access this xDS server. You then can supply this to
 your application in two methods:
 
 - Put the entire JSON in `GRPC_XDS_BOOTSTRAP_CONFIG` environment variable
@@ -90,16 +90,13 @@ Make sure gRPC Python is at least v1.36. No code change is needed.
 
 ### JavaScript
 
-Install `@grpc/grpc-js-xds` then run
+Install [@grpc/grpc-js-xds](https://www.npmjs.com/package/@grpc/grpc-js-xds) 1.5.0 or later then run
 
 ```javascript
 require('@grpc/grpc-js-xds').register();
 ```
 
-At this time of writing, grpc-js-xds v1.4.0 is broken and earlier versions do not support xDSv3. You'll need to install
-the package from the main branch for this to work.
-
-Note that gRPC C (the `grpc` package) is deprecated and does not contains xDS support.
+Note that gRPC C (the [grpc](https://www.npmjs.com/package/grpc) package) is deprecated and does not contains xDS support.
 
 ### Java
 You need to add grpc-xds dependency along with the common grpc dependencies.

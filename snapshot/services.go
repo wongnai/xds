@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/metric"
 	"net"
 	"strconv"
 
@@ -48,7 +49,7 @@ func (s *Snapshotter) startServices(ctx context.Context) error {
 
 	emit = func() {
 		version := reflector.LastSyncResourceVersion()
-		s.kubeEventCounter.Add(context.Background(), 1, meter.ResourceAttrKey.String("services"))
+		s.kubeEventCounter.Add(ctx, 1, metric.WithAttributes(meter.ResourceAttrKey.String("services")))
 
 		services := sliceToService(store.List())
 		resources := kubeServicesToResources(services)
