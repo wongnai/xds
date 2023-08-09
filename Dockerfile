@@ -1,10 +1,5 @@
-<<<<<<< Updated upstream
-FROM golang:1.17 AS builder
-RUN go install -v -trimpath github.com/grpc-ecosystem/grpc-health-probe@v0.4.6
-=======
 FROM golang:1.20 AS builder
 RUN go install -v -trimpath github.com/grpc-ecosystem/grpc-health-probe@v0.4.19
->>>>>>> Stashed changes
 COPY . /build
 WORKDIR /build
 RUN make
