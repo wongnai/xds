@@ -31,11 +31,18 @@ func (c cacheMarshaler) MarshalJSON() ([]byte, error) {
 		out[node] = nodeMap
 
 		for i := types.ResponseType(0); i < types.UnknownType; i++ {
-			if len(snapshot.Resources[i].Items) == 0 {
+			typeURL, _ := cache.GetResponseTypeURL(i)
+			version := snapshot.GetVersion(typeURL)
+			resources := snapshot.GetResources(typeURL)
+
+			if len(resources) == 0 {
 				continue
 			}
-			typeName, _ := cache.GetResponseTypeURL(i)
-			nodeMap[typeName] = resourcesMarshaler{snapshot.Resources[i]}
+
+			nodeMap[typeURL] = resourcesMarshaler{
+				version:   version,
+				resources: resources,
+			}
 		}
 	}
 
@@ -43,7 +50,8 @@ func (c cacheMarshaler) MarshalJSON() ([]byte, error) {
 }
 
 type resourcesMarshaler struct {
-	cache.Resources
+	version   string
+	resources map[string]types.Resource
 }
 
 func (r resourcesMarshaler) MarshalJSON() ([]byte, error) {
@@ -53,12 +61,12 @@ func (r resourcesMarshaler) MarshalJSON() ([]byte, error) {
 	}
 
 	out := outMap{
-		Version: r.Version,
+		Version: r.version,
 		Items:   map[string]resourceMarshaler{},
 	}
 
-	for k, v := range r.Resources.Items {
-		out.Items[k] = resourceMarshaler{Resource: v.Resource}
+	for k, v := range r.resources {
+		out.Items[k] = resourceMarshaler{Resource: v}
 	}
 
 	return json.Marshal(out)

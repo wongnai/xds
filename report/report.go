@@ -26,12 +26,14 @@ type server struct {
 type Option func(s *server)
 
 func NewServer(opts ...Option) loadReportingService.LoadReportingServiceServer {
-	meter := metric.Must(meter.GetMeter())
+	meter := meter.GetMeter()
+	lrsUpdatesCounter, _ := meter.Int64Counter("lrs_updates")
+	lrsNodesCounter, _ := meter.Int64UpDownCounter("lrs_nodes")
 	s := &server{
 		nodesConnected:         make(map[string]bool),
 		statsIntervalInSeconds: 300,
-		statsUpdateCounter:     meter.NewInt64Counter("lrs_updates"),
-		nodeGauge:              meter.NewInt64UpDownCounter("lrs_nodes"),
+		statsUpdateCounter:     lrsUpdatesCounter,
+		nodeGauge:              lrsNodesCounter,
 	}
 
 	for _, o := range opts {
@@ -47,7 +49,7 @@ func (s *server) StreamLoadStats(stream loadReportingService.LoadReportingServic
 		req, err := stream.Recv()
 		if err != nil {
 			if node != nil {
-				s.removeNode(node)
+				s.removeNode(stream.Context(), node)
 			}
 			return err
 		}
@@ -62,7 +64,7 @@ func (s *server) StreamLoadStats(stream loadReportingService.LoadReportingServic
 func (s *server) HandleRequest(stream loadReportingService.LoadReportingService_StreamLoadStatsServer, request *loadReportingService.LoadStatsRequest) {
 	nodeID := request.GetNode().GetId()
 
-	s.statsUpdateCounter.Add(context.Background(), 1, meter.NodeIDAttrKey.String(nodeID))
+	s.statsUpdateCounter.Add(stream.Context(), 1)
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -70,7 +72,7 @@ func (s *server) HandleRequest(stream loadReportingService.LoadReportingService_
 	if _, exist := s.nodesConnected[nodeID]; !exist {
 		klog.V(4).InfoS("New node connected", "node_id", nodeID, "cluster_str", request.Node.Cluster)
 		s.nodesConnected[nodeID] = true
-		s.nodeGauge.Add(context.Background(), 1)
+		s.nodeGauge.Add(stream.Context(), 1)
 
 		err := stream.Send(&loadReportingService.LoadStatsResponse{
 			Clusters:                  []string{"dummy_cluster"},
@@ -81,7 +83,7 @@ func (s *server) HandleRequest(stream loadReportingService.LoadReportingService_
 			klog.Errorf("Unable to send response to node %s due to err: %s", nodeID, err)
 			delete(s.nodesConnected, nodeID)
 			klog.V(4).InfoS("Node disconnected", "node_id", nodeID, "cluster_str", request.Node.Cluster)
-			s.nodeGauge.Add(context.Background(), -1)
+			s.nodeGauge.Add(stream.Context(), -1)
 		}
 		return
 	}
@@ -93,7 +95,7 @@ func (s *server) HandleRequest(stream loadReportingService.LoadReportingService_
 	}
 }
 
-func (s *server) removeNode(node *corev3.Node) {
+func (s *server) removeNode(ctx context.Context, node *corev3.Node) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -101,7 +103,7 @@ func (s *server) removeNode(node *corev3.Node) {
 
 	klog.V(4).InfoS("Node disconnected", "node_id", node.Id, "cluster_str", node.Cluster)
 
-	s.nodeGauge.Add(context.Background(), -1)
+	s.nodeGauge.Add(ctx, -1)
 }
 
 func WithStatsIntervalInSeconds(statsIntervalInSeconds int64) Option {

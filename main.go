@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"net"
 	"os"
 	"os/signal"
@@ -35,6 +36,8 @@ func main() {
 	flag.CommandLine.Int64Var(&statsIntervalInSeconds, "statsinterval", 300, "stats update interval in seconds")
 	flag.Parse()
 
+	meter.InstallPromExporter()
+
 	stopCtx, stop := context.WithCancel(context.Background())
 
 	clientConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
@@ -46,7 +49,7 @@ func main() {
 		klog.Fatal("Fail to create Kubernetes client", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.StreamInterceptor(meter.NewStreamMetricInterceptor()))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()), grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
 	snapshotter := snapshot.New(k8sClient)
 	xdsServer := server.NewServer(stopCtx, snapshotter.MuxCache(), meter.NewXdsServerCallbackFuncs())
 	debugServer := debug.New(snapshotter.MuxCache())

@@ -85,9 +85,10 @@ func New(client kubernetes.Interface) *Snapshotter {
 		endpointResourceCache: map[string]endpointCacheItem{},
 	}
 
-	ss.kubeEventCounter = metric.Must(meter.GetMeter()).NewInt64Counter("xds_kube_events")
-	_ = metric.Must(meter.GetMeter()).NewInt64GaugeObserver("xds_snapshot_resources", ss.snapshotResourceGaugeCallback)
-	_ = metric.Must(meter.GetMeter()).NewInt64GaugeObserver("xds_apigateway_endpoints", ss.apiGatewayEndpointGaugeCallback)
+	meter := meter.GetMeter()
+	ss.kubeEventCounter, _ = meter.Int64Counter("xds_kube_events")
+	meter.Int64ObservableGauge("xds_snapshot_resources", metric.WithInt64Callback(ss.snapshotResourceGaugeCallback))
+	meter.Int64ObservableGauge("xds_apigateway_endpoints", metric.WithInt64Callback(ss.apiGatewayEndpointGaugeCallback))
 
 	return ss
 }
@@ -107,19 +108,21 @@ func (s *Snapshotter) Start(stopCtx context.Context) error {
 	return group.Wait()
 }
 
-func (s *Snapshotter) snapshotResourceGaugeCallback(_ context.Context, result metric.Int64ObserverResult) {
+func (s *Snapshotter) snapshotResourceGaugeCallback(_ context.Context, result metric.Int64Observer) error {
 	for k, r := range s.getServiceResourcesByType() {
-		result.Observe(int64(len(r)), meter.TypeURLAttrKey.String(k))
+		result.Observe(int64(len(r)), metric.WithAttributes(meter.TypeURLAttrKey.String(k)))
 	}
 	for k, r := range s.getEndpointResourcesByType() {
-		result.Observe(int64(len(r)), meter.TypeURLAttrKey.String(k))
+		result.Observe(int64(len(r)), metric.WithAttributes(meter.TypeURLAttrKey.String(k)))
 	}
+	return nil
 }
 
-func (s *Snapshotter) apiGatewayEndpointGaugeCallback(_ context.Context, result metric.Int64ObserverResult) {
+func (s *Snapshotter) apiGatewayEndpointGaugeCallback(_ context.Context, result metric.Int64Observer) error {
 	for k, stat := range s.getAPIGatewayStats() {
-		result.Observe(int64(stat), meter.APIGatewayAttrKey.String(k))
+		result.Observe(int64(stat), metric.WithAttributes(meter.APIGatewayAttrKey.String(k)))
 	}
+	return nil
 }
 
 func (s *Snapshotter) setServiceResourcesByType(serviceResourcesByType map[string][]types.Resource) {

@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/metric"
 	"sort"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -44,7 +45,7 @@ func (s *Snapshotter) startEndpoints(ctx context.Context) error {
 
 	emit = func() {
 		version := reflector.LastSyncResourceVersion()
-		s.kubeEventCounter.Add(context.Background(), 1, meter.ResourceAttrKey.String("endpoints"))
+		s.kubeEventCounter.Add(ctx, 1, metric.WithAttributes(meter.ResourceAttrKey.String("endpoints")))
 
 		endpoints := sliceToEndpoints(store.List())
 		endpointsResources := s.kubeEndpointsToResources(endpoints)
