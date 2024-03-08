@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"net"
 	"net/http"
 	"os"
@@ -22,11 +21,13 @@ import (
 	"github.com/wongnai/xds/report"
 	"github.com/wongnai/xds/snapshot"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 )
@@ -40,17 +41,23 @@ func main() {
 
 	meter.InstallPromExporter()
 
-	httpClient := http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
-	}
-
 	stopCtx, stop := context.WithCancel(context.Background())
 
 	clientConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
 	if err != nil {
 		klog.Fatal("Fail to create Kubernetes client config", err)
 	}
-	k8sClient, err := kubernetes.NewForConfigAndClient(clientConfig, &httpClient)
+
+	httpTransport, err := rest.TransportFor(clientConfig)
+	if err != nil {
+		klog.Fatal("Fail to create HTTP client", err)
+	}
+	httpClient := &http.Client{
+		Transport: otelhttp.NewTransport(httpTransport),
+		Timeout:   clientConfig.Timeout,
+	}
+
+	k8sClient, err := kubernetes.NewForConfigAndClient(clientConfig, httpClient)
 	if err != nil {
 		klog.Fatal("Fail to create Kubernetes client", err)
 	}
