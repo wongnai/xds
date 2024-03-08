@@ -1,11 +1,12 @@
 package debug
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -20,8 +21,12 @@ func New(cache *cache.MuxCache) *Server {
 	out := &Server{
 		mux: mux,
 		Server: http.Server{
-			Addr:    ":9000",
-			Handler: mux,
+			Addr:              ":9000",
+			Handler:           mux,
+			ReadTimeout:       60 * time.Second,
+			ReadHeaderTimeout: 60 * time.Second,
+			WriteTimeout:      60 * time.Minute, // for pprof
+			IdleTimeout:       10 * time.Second,
 		},
 		cache: cache,
 	}

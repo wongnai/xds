@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,7 @@ import (
 	"github.com/wongnai/xds/meter"
 	"github.com/wongnai/xds/report"
 	"github.com/wongnai/xds/snapshot"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -38,18 +40,22 @@ func main() {
 
 	meter.InstallPromExporter()
 
+	httpClient := http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+	}
+
 	stopCtx, stop := context.WithCancel(context.Background())
 
 	clientConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
 	if err != nil {
 		klog.Fatal("Fail to create Kubernetes client config", err)
 	}
-	k8sClient, err := kubernetes.NewForConfig(clientConfig)
+	k8sClient, err := kubernetes.NewForConfigAndClient(clientConfig, &httpClient)
 	if err != nil {
 		klog.Fatal("Fail to create Kubernetes client", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()), grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
+	grpcServer := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	snapshotter := snapshot.New(k8sClient)
 	xdsServer := server.NewServer(stopCtx, snapshotter.MuxCache(), meter.NewXdsServerCallbackFuncs())
 	debugServer := debug.New(snapshotter.MuxCache())

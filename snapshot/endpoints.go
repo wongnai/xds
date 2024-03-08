@@ -3,7 +3,6 @@ package snapshot
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/metric"
 	"sort"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -11,6 +10,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/wongnai/xds/meter"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

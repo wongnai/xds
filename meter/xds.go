@@ -2,12 +2,12 @@ package meter
 
 import (
 	"context"
-	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	"go.opentelemetry.io/otel/metric"
 
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discoverygrpc "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"k8s.io/klog/v2"
 )
 
