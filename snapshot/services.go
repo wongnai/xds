@@ -3,7 +3,6 @@ package snapshot
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/metric"
 	"net"
 	"strconv"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/wongnai/xds/meter"
 	"github.com/wongnai/xds/snapshot/apigateway"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/types/known/anypb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
