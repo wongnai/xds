@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/ccoveille/go-safecast"
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
@@ -142,6 +143,10 @@ func (s *Snapshotter) kubeEndpointToResources(ep *corev1.Endpoints) []types.Reso
 				if hostname == "" && addr.NodeName != nil {
 					hostname = *addr.NodeName
 				}
+				portU32, err := safecast.ToUint32(port.Port)
+				if err != nil {
+					panic(err)
+				}
 
 				cla.Endpoints[0].LbEndpoints = append(cla.Endpoints[0].LbEndpoints, &endpointv3.LbEndpoint{
 					HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
@@ -152,7 +157,7 @@ func (s *Snapshotter) kubeEndpointToResources(ep *corev1.Endpoints) []types.Reso
 										Protocol: corev3.SocketAddress_TCP,
 										Address:  addr.IP,
 										PortSpecifier: &corev3.SocketAddress_PortValue{
-											PortValue: uint32(port.Port),
+											PortValue: portU32,
 										},
 									},
 								},

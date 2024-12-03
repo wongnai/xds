@@ -44,6 +44,11 @@ pods.
 
 And that's it! Your xDS server is ready.
 
+## xDS Idle
+
+There's [an issue](https://github.com/envoyproxy/go-control-plane/issues/431) with the underlying library. When using
+newer gRPC client libraries you'll need to disable idle timeout, or xDS will stop distributing hosts after some time.
+
 ## Connecting to xDS from various languages
 You'd need to set xDS bootstrap config on your application. Here's the xDS bootstrap file:
 
@@ -169,6 +174,11 @@ for all namespaces just fine.
 
 Finally, as xDS is only the control plane, in case of outages any new/removed endpoints will not be known by clients
 but existing connections will remain flowing. gRPC automatically reconnects to xDS control plane in this case. 
+
+## Monitoring
+
+This application exposes Prometheus metrics on `http://:9000/metrics`. Additionally, `http://:9000` dumps the current
+xDS configuration for debugging.
 
 ## License
 

@@ -6,9 +6,9 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	loadReportingService "github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3"
-	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/wongnai/xds/meter"
 	"go.opentelemetry.io/otel/metric"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"k8s.io/klog/v2"
 )
 
@@ -76,7 +76,7 @@ func (s *server) HandleRequest(stream loadReportingService.LoadReportingService_
 
 		err := stream.Send(&loadReportingService.LoadStatsResponse{
 			Clusters:                  []string{"dummy_cluster"},
-			LoadReportingInterval:     &duration.Duration{Seconds: s.statsIntervalInSeconds},
+			LoadReportingInterval:     &durationpb.Duration{Seconds: s.statsIntervalInSeconds},
 			ReportEndpointGranularity: true,
 		})
 		if err != nil {

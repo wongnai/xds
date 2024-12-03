@@ -1,5 +1,5 @@
-FROM golang:1.22 AS builder
-RUN go install -v -trimpath github.com/grpc-ecosystem/grpc-health-probe@v0.4.24
+FROM golang:1.23 AS builder
+RUN go install -v -trimpath github.com/grpc-ecosystem/grpc-health-probe@v0.4.35
 COPY . /build
 WORKDIR /build
 RUN make
