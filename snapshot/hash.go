@@ -3,16 +3,16 @@ package snapshot
 import (
 	"sort"
 
-	"github.com/cespare/xxhash"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/zhangyunhao116/wyhash"
 	"google.golang.org/protobuf/proto"
 )
 
 // resourcesHash hash the provided resources
 // This function may mutate input to make it deterministic
 func resourcesHash(resources []types.Resource) (uint64, error) {
-	hasher := xxhash.New()
+	hasher := wyhash.NewDefault()
 
 	sort.SliceStable(resources, func(i, j int) bool {
 		nameI := cache.GetResourceName(resources[i])
