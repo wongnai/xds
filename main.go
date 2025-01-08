@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	reflectionservice "google.golang.org/grpc/reflection"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
@@ -76,6 +77,7 @@ func main() {
 	}()
 
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	reflectionservice.Register(grpcServer)
 	discoverygrpc.RegisterAggregatedDiscoveryServiceServer(grpcServer, xdsServer)
 	endpointservice.RegisterEndpointDiscoveryServiceServer(grpcServer, xdsServer)
 	clusterservice.RegisterClusterDiscoveryServiceServer(grpcServer, xdsServer)
