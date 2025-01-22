@@ -77,13 +77,15 @@ func main() {
 	}()
 
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-	reflectionservice.Register(grpcServer)
 	discoverygrpc.RegisterAggregatedDiscoveryServiceServer(grpcServer, xdsServer)
 	endpointservice.RegisterEndpointDiscoveryServiceServer(grpcServer, xdsServer)
 	clusterservice.RegisterClusterDiscoveryServiceServer(grpcServer, xdsServer)
 	routeservice.RegisterRouteDiscoveryServiceServer(grpcServer, xdsServer)
 	listenerservice.RegisterListenerDiscoveryServiceServer(grpcServer, xdsServer)
 	loadreportingservice.RegisterLoadReportingServiceServer(grpcServer, report.NewServer(report.WithStatsIntervalInSeconds(statsIntervalInSeconds)))
+	if os.Getenv("ENABLE_GRPC_REFLECTION") == "true" {
+		reflectionservice.Register(grpcServer)
+	}
 
 	lis, err := net.Listen("tcp", ":5000") //nolint:gosec
 	if err != nil {
