@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	reflectionservice "google.golang.org/grpc/reflection"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
@@ -82,6 +83,9 @@ func main() {
 	routeservice.RegisterRouteDiscoveryServiceServer(grpcServer, xdsServer)
 	listenerservice.RegisterListenerDiscoveryServiceServer(grpcServer, xdsServer)
 	loadreportingservice.RegisterLoadReportingServiceServer(grpcServer, report.NewServer(report.WithStatsIntervalInSeconds(statsIntervalInSeconds)))
+	if os.Getenv("ENABLE_GRPC_REFLECTION") == "true" {
+		reflectionservice.Register(grpcServer)
+	}
 
 	lis, err := net.Listen("tcp", ":5000") //nolint:gosec
 	if err != nil {
