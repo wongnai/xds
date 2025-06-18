@@ -1,0 +1,4 @@
+# This configuration is for our internal build tool
+# The internal tooling then get manually stripped
+env: 1
+project_type: PROJECT_TYPE_APPLICATION

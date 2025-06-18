@@ -14,8 +14,23 @@ linters:
     - stylecheck
     - unconvert
     - spancheck
+    - gomodguard
   disable:
     - errcheck
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+  gomodguard:
+    blocked:
+      versions:
+        - google.golang.org/grpc:
+            version: ">1.58.3, <1.68.0"
+            reason: "gRPC may trigger a bug in xDS server: https://github.com/wongnai/xds/issues/11 . When using gRPC newer than 1.58.3, grpclib 1.18.0 must be used for a workaround"
+        - go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc:
+            version: "<0.46.0"
+            reason: "otelgrpc <0.46.0 provide high cardinality metrics: https://github.com/open-telemetry/opentelemetry-go-contrib/security/advisories/GHSA-8pgv-569h-w5rw"
 run:
   timeout: 10m
   build-tags:
