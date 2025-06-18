@@ -1,0 +1,9 @@
+# Install specific version of golangci-lint
+version: v1.64.8
+name: golangci-lint
+destination: .bin
+
+plugins:
+  # This is not needed, but golangci-lint requires at least one
+  - module: github.com/golangci/example-plugin-module-linter
+    version: 564ddee1e1118181e0c2f204e2f22eeed845586b
