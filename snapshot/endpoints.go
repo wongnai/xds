@@ -34,13 +34,13 @@ func (s *Snapshotter) startEndpoints(ctx context.Context) error {
 	}, k8scache.DeletionHandlingMetaNamespaceKeyFunc)
 
 	reflector := k8scache.NewReflector(&k8scache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+		ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
 			return s.client.CoreV1().Endpoints("").List(ctx, options)
 		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+		WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
 			return s.client.CoreV1().Endpoints("").Watch(ctx, options)
 		},
-	}, &corev1.Endpoints{}, store, s.ResyncPeriod)
+	}, &corev1.Endpoints{}, store, s.ResyncPeriod) //nolint:staticcheck // We use deprecated API to support legacy Kubernetes
 
 	var lastSnapshotHash uint64
 
@@ -76,16 +76,16 @@ func (s *Snapshotter) startEndpoints(ctx context.Context) error {
 	return nil
 }
 
-func sliceToEndpoints(s []interface{}) []*corev1.Endpoints {
-	out := make([]*corev1.Endpoints, len(s))
+func sliceToEndpoints(s []interface{}) []*corev1.Endpoints { //nolint:staticcheck // We use deprecated API to support legacy Kubernetes
+	out := make([]*corev1.Endpoints, len(s)) //nolint:staticcheck
 	for i, v := range s {
-		out[i] = v.(*corev1.Endpoints)
+		out[i] = v.(*corev1.Endpoints) //nolint:staticcheck
 	}
 	return out
 }
 
 // kubeServicesToResources convert list of Kubernetes endpoints to Endpoint
-func (s *Snapshotter) kubeEndpointsToResources(endpoints []*corev1.Endpoints) []types.Resource {
+func (s *Snapshotter) kubeEndpointsToResources(endpoints []*corev1.Endpoints) []types.Resource { //nolint:staticcheck // We use deprecated API to support legacy Kubernetes
 	var out []types.Resource
 
 	for _, ep := range endpoints {
@@ -95,7 +95,7 @@ func (s *Snapshotter) kubeEndpointsToResources(endpoints []*corev1.Endpoints) []
 	return out
 }
 
-func (s *Snapshotter) kubeEndpointToResources(ep *corev1.Endpoints) []types.Resource {
+func (s *Snapshotter) kubeEndpointToResources(ep *corev1.Endpoints) []types.Resource { //nolint:staticcheck // We use deprecated API to support legacy Kubernetes
 	name, err := k8scache.MetaNamespaceKeyFunc(ep)
 	if err != nil {
 		klog.Errorf("fail to get object key: %s", err)
