@@ -23,6 +23,7 @@
         container = pkgs.dockerTools.buildLayeredImage {
           name = "xds";
           contents = with pkgs; [ dockerTools.caCertificates ];
+          config.Cmd = [ "${packages.default}/bin/xds" ];
         };
       };
       devShells = {

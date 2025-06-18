@@ -26,7 +26,23 @@ The goal of this xDS server is to only solve gRPC load balancing. The design is 
 
 ## Usage
 
-First you need to install this. Or you can just run this locally:
+The server is available as a Docker image on `ghcr.io/wongnai/xds:master`. (or any tagged versions)
+
+If you're running in cluster it should also work without any environment variables. It requires some read-only
+access, which you can find the ClusterRole in [deploy.yml](deploy.yml). It is recommended to deploy this as headless
+service. As it use DNS-based discovery, we recommend not to use autoscaling on this service but keep it always at max
+pods.
+
+### Usage with Nix
+
+The server can be built with Nix Flakes: `nix build '.#'`
+
+You can also build a minimal container with `nix build '.#container' && docker load < result`. This container is
+*distroless*, and is not being tested.
+
+### Building
+
+Alternatively, you can just run this locally:
 
 ```shell
 # Make sure you have go compiler installed
@@ -36,13 +52,6 @@ make
 
 This use your local kubeconfig, so if `kubectl` works then it should work, unless you use some sort of authentication
 plugin.
-
-If you're running in cluster it should also work without any environment variables. It requires some read-only
-access, which you can find the ClusterRole in [deploy.yml](deploy.yml). It is recommended to deploy this as headless
-service. As it use DNS-based discovery, we recommend not to use autoscaling on this service but keep it always at max
-pods.
-
-And that's it! Your xDS server is ready.
 
 ## xDS Idle
 
@@ -160,12 +169,14 @@ Then client applications (with xDS support) can connect to `xds:///apigw1` or `x
 and any API calls to gRPC service `package.name.ExampleService` and `package.name.Example2Service` will be sent to this
 service.
 
+Currently, this feature is not being used in our production.
+
 ## Scalability
 
 Since xDS is also gRPC based, it might beg the question "how do we load balance the load balancer"?
 
 As xDS is only the control plane, the load on xDS itself should be really light - it only contains watches for all
-possible service pairs, and data for all Kubernetes endpoints. Therefore it should be possible to prescale xDS to the
+possible service pairs, and data for all Kubernetes endpoints. Therefore, it should be possible to prescale xDS to the
 desired capacity and use DNS to discover xDS control plane.
 
 The question remains that how many service pairs this would be able to support, and how large a Kubernetes cluster it
