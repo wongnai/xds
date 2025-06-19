@@ -53,7 +53,7 @@ func (s *Snapshotter) startEndpoints(ctx context.Context) error {
 		hash, err := resourcesHash(endpointsResources)
 		if err == nil {
 			if hash == lastSnapshotHash {
-				klog.V(4).Info("new snapshot is equivalent to the previous one")
+				klog.V(5).Info("new snapshot is equivalent to the previous one")
 				return
 			}
 			lastSnapshotHash = hash
