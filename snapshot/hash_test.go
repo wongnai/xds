@@ -2,12 +2,13 @@ package snapshot
 
 import (
 	"fmt"
+	"math/rand"
+	"testing"
+
 	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"testing"
 )
 
 var resourceHashTestSet1 = []types.Resource{

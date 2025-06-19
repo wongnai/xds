@@ -18,7 +18,9 @@
         default = pkgs.buildGoModule {
           name = "xds";
           src = gitignore.lib.gitignoreSource ./.;
-          vendorHash = "sha256-Z9D/XiYUb1GGrTyjgG6R2BMnsa42zysvlv20YXRBTLo=";
+          # To update this, set the value to `lib.fakeHash` then build with `nix build '.#'`
+          # Nix will tell you the correct value.
+          vendorHash = "sha256-1/5X4eNf/nKiRxjcmNu7AbU1KYn/MppCdEH671TclLE=";
         };
         container = pkgs.dockerTools.buildLayeredImage {
           name = "xds";

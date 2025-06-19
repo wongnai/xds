@@ -7,6 +7,7 @@ import (
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	channelz "github.com/rantav/go-grpc-channelz"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
@@ -45,6 +46,7 @@ func (s *Server) register() {
 	s.mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	s.mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	s.mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	s.mux.Handle("/channelz/", channelz.CreateHandler("/", ":5000"))
 
 	s.mux.HandleFunc("/", s.snapshot)
 }
