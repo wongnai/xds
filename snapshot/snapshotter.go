@@ -18,16 +18,16 @@ import (
 
 var Logger log.Logger = &log.LoggerFuncs{
 	DebugFunc: func(s string, i ...interface{}) {
-		klog.V(4).Infof(s, i...)
+		klog.V(4).InfofDepth(1, s, i...)
 	},
 	InfoFunc: func(s string, i ...interface{}) {
-		klog.V(2).Infof(s, i...)
+		klog.V(2).InfofDepth(1, s, i...)
 	},
 	WarnFunc: func(s string, i ...interface{}) {
-		klog.Warningf(s, i...)
+		klog.WarningfDepth(1, s, i...)
 	},
 	ErrorFunc: func(s string, i ...interface{}) {
-		klog.Errorf(s, i...)
+		klog.ErrorfDepth(1, s, i...)
 	},
 }
 
