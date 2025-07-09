@@ -20,9 +20,14 @@ var GrpcSet = wire.NewSet(
 	ProvideSideEffectGrpcChannelzRegistered,
 )
 
-func ProvideGrpcServer() (*grpc.Server, func()) {
-	// TODO: Refactor otel
-	server := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
+func ProvideOtelGrpcServerOptions() []grpc.ServerOption {
+	return []grpc.ServerOption{
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	}
+}
+
+func ProvideGrpcServer(serverOptions []grpc.ServerOption) (*grpc.Server, func()) {
+	server := grpc.NewServer(serverOptions...)
 	return server, func() {
 		server.GracefulStop()
 	}
