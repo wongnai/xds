@@ -105,6 +105,7 @@ func kubeServicesToResources(services []*corev1.Service) []types.Resource {
 		for _, port := range svc.Spec.Ports {
 			targetHostPort := net.JoinHostPort(fullName, port.Name)
 			targetHostPortNumber := net.JoinHostPort(fullName, strconv.Itoa(int(port.Port)))
+
 			routeConfig := &routev3.RouteConfiguration{
 				Name: targetHostPortNumber,
 				VirtualHosts: []*routev3.VirtualHost{
@@ -121,6 +122,7 @@ func kubeServicesToResources(services []*corev1.Service) []types.Resource {
 									ClusterSpecifier: &routev3.RouteAction_Cluster{
 										Cluster: targetHostPort,
 									},
+									RetryPolicy: retryPolicyFromService(svc),
 								},
 							},
 						}},

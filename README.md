@@ -58,6 +58,59 @@ plugin.
 There's [an issue](https://github.com/envoyproxy/go-control-plane/issues/431) with the underlying library. When using
 newer gRPC client libraries you'll need to disable idle timeout, or xDS will stop distributing hosts after some time.
 
+## Features
+
+### Retry Policy
+
+This xDS server support the configuration of [gRPC retry policy](https://github.com/grpc/proposal/blob/master/A44-xds-retry.md) by adding the following annotations to Kubernetes service
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  # ...
+  annotations:
+    xds.lmwn.com/retry-status: cancelled,deadline-exceeded,internal,resource-exhausted,unavailable
+    xds.lmwn.com/retry-count: "1"
+    xds.lmwn.com/retry-backoff: 25ms,250ms 
+```
+
+The values are:
+
+- `retry-status` **(Required)**: Comma separated list of statuses to retry. The example above show the entire available options. If not configured, the feature is disabled.
+- `retry-count` (default: 1): Number of time to retries. gRPC requires this to be at most 5.
+- `retry-backoff` (default: `25ms,250ms`): gRPC use a jittered exponential backoff algorithm. This value controls the backoff duration.
+  - The value syntax is comma-separated [Go Duration](https://pkg.go.dev/time#ParseDuration)
+  - If one value is specified, it is the *base interval*. The minimum value is 1ms. The *max interval* is set to 10 times the *base interval*.
+  - If two values are specified, it is the *base interval*, and *max interval* respectively. The max interval must be greater than the base interval.
+  - The N<sup>th</sup> retry attempt will fire between 0ms and $min((2^N-1) \times base\\_interval, max\\_interval)$
+  - For example, with retry-count=5 the retries attempts are: 0-25ms, 0-75ms, 0-175ms, 0-250ms, 0-250ms
+
+If the count or backoff value is invalid, it is ignored and an error is logged in the xDS server log.
+
+### Virtual API Gateway
+
+One feature of xDS is routing. This xDS server supports virtual API gateway by adding the following annotations to
+Kubernetes service:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  # ...
+  annotations:
+    xds.lmwn.com/api-gateway: apigw1,apigw2
+    xds.lmwn.com/grpc-service: package.name.ExampleService,package.name.Example2Service
+```
+
+The service also must have a port named `grpc`, which traffic will be sent to.
+
+Then client applications (with xDS support) can connect to `xds:///apigw1` or `xds:///apigw2` (no port or namespace)
+and any API calls to gRPC service `package.name.ExampleService` and `package.name.Example2Service` will be sent to this
+service.
+
+Currently, this feature is not being used in our production.
+
 ## Connecting to xDS from various languages
 You'd need to set xDS bootstrap config on your application. Here's the xDS bootstrap file:
 
@@ -146,30 +199,6 @@ Note: the serviceConfigLookUp should not be disabled otherwise the xds protocol 
 Since environment variable cannot be changed in java, there are 2 system properties which overrides the common bootstrap variables:- 
 * io.grpc.xds.bootstrap to override GRPC_XDS_BOOTSTRAP
 * io.grpc.xds.bootstrapConfig to override GRPC_XDS_BOOTSTRAP_CONFIG
-
-
-## Virtual API Gateway
-
-One feature of xDS is routing. This xDS server supports virtual API gateway by adding the following annotations to
-Kubernetes service:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  # ...
-  annotations:
-    xds.lmwn.com/api-gateway: apigw1,apigw2
-    xds.lmwn.com/grpc-service: package.name.ExampleService,package.name.Example2Service
-```
-
-The service also must have a port named `grpc`, which traffic will be sent to.
-
-Then client applications (with xDS support) can connect to `xds:///apigw1` or `xds:///apigw2` (no port or namespace)
-and any API calls to gRPC service `package.name.ExampleService` and `package.name.Example2Service` will be sent to this
-service.
-
-Currently, this feature is not being used in our production.
 
 ## Scalability
 
