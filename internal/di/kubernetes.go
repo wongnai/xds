@@ -45,7 +45,7 @@ func ProvideK8sHTTPClient(transport K8sHTTPTransport, config *rest.Config) K8sHT
 	}
 }
 
-func ProvideK8sClient(clientConfig *rest.Config, httpClient K8sHTTPClient) (*kubernetes.Clientset, error) {
+func ProvideK8sClient(clientConfig *rest.Config, httpClient K8sHTTPClient) (kubernetes.Interface, error) {
 	clientset, err := kubernetes.NewForConfigAndClient(clientConfig, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)

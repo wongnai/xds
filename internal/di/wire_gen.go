@@ -10,36 +10,33 @@ import (
 	"context"
 	"github.com/wongnai/xds/debug"
 	"google.golang.org/grpc"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Injectors from wire.go:
 
 func InitializeServer(ctx context.Context, statsIntervalSeconds StatsIntervalSeconds) (Servers, func(), error) {
-	server, cleanup := ProvideGrpcServer()
-	healthServer, cleanup2 := ProvideGrpcHealthServer()
-	sideEffectGrpcHealthRegistered := ProvideSideEffectGrpcHealthRegistered(server, healthServer)
+	v := ProvideOtelGrpcServerOptions()
+	server, cleanup := ProvideGrpcServer(v)
 	config, err := ProvideClientConfig()
 	if err != nil {
-		cleanup2()
 		cleanup()
 		return Servers{}, nil, err
 	}
-	v, err := ProvideK8sHTTPTransport(config)
+	v2, err := ProvideK8sHTTPTransport(config)
 	if err != nil {
-		cleanup2()
 		cleanup()
 		return Servers{}, nil, err
 	}
-	v2 := ProvideK8sHTTPClient(v, config)
-	clientset, err := ProvideK8sClient(config, v2)
+	v3 := ProvideK8sHTTPClient(v2, config)
+	kubernetesInterface, err := ProvideK8sClient(config, v3)
 	if err != nil {
-		cleanup2()
 		cleanup()
 		return Servers{}, nil, err
 	}
-	snapshotter, cleanup3 := ProvideSnapshotter(ctx, clientset)
+	snapshotter, cleanup2 := ProvideSnapshotter(ctx, kubernetesInterface)
 	callbackFuncs := ProvideXdsLogger()
-	serverServer, cleanup4 := ProvideXdsServer(ctx, snapshotter, callbackFuncs)
+	serverServer, cleanup3 := ProvideXdsServer(ctx, snapshotter, callbackFuncs)
 	sideEffectADSRegistered := ProvideSideEffectADSRegistered(server, serverServer)
 	sideEffectEDSRegistered := ProvideSideEffectEDSRegistered(server, serverServer)
 	sideEffectCDSRegistered := ProvideSideEffectCDSRegistered(server, serverServer)
@@ -55,15 +52,20 @@ func InitializeServer(ctx context.Context, statsIntervalSeconds StatsIntervalSec
 		_LDS: sideEffectLDSRegistered,
 		_LRS: sideEffectLRSRegistered,
 	}
+	devServer := DevServer{
+		_Xds:       xdsAllSideEffects,
+		GrpcServer: server,
+	}
+	healthServer, cleanup4 := ProvideGrpcHealthServer()
+	sideEffectGrpcHealthRegistered := ProvideSideEffectGrpcHealthRegistered(server, healthServer)
 	sideEffectGrpcReflectionRegistered := ProvideSideEffectGrpcReflectionRegisteredIfEnv(server)
 	sideEffectGrpcChannelzRegistered := ProvideSideEffectGrpcChannelzRegistered(server)
 	debugServer := ProvideDebugServer(snapshotter)
 	servers := Servers{
+		DevServer:   devServer,
 		_GrpcHealth: sideEffectGrpcHealthRegistered,
-		_Xds:        xdsAllSideEffects,
 		_Reflection: sideEffectGrpcReflectionRegistered,
 		_Channelz:   sideEffectGrpcChannelzRegistered,
-		GrpcServer:  server,
 		DebugServer: debugServer,
 	}
 	return servers, func() {
@@ -74,14 +76,55 @@ func InitializeServer(ctx context.Context, statsIntervalSeconds StatsIntervalSec
 	}, nil
 }
 
+func InitializeTestServer(ctx context.Context, kubeClient kubernetes.Interface, statsIntervalSeconds StatsIntervalSeconds) (TestServer, func(), error) {
+	v := ProvideGrpcTestOption()
+	server, cleanup := ProvideGrpcServer(v)
+	snapshotter, cleanup2 := ProvideSnapshotter(ctx, kubeClient)
+	callbackFuncs := ProvideXdsLogger()
+	serverServer, cleanup3 := ProvideXdsServer(ctx, snapshotter, callbackFuncs)
+	sideEffectADSRegistered := ProvideSideEffectADSRegistered(server, serverServer)
+	sideEffectEDSRegistered := ProvideSideEffectEDSRegistered(server, serverServer)
+	sideEffectCDSRegistered := ProvideSideEffectCDSRegistered(server, serverServer)
+	sideEffectRDSRegistered := ProvideSideEffectRDSRegistered(server, serverServer)
+	sideEffectLDSRegistered := ProvideSideEffectLDSRegistered(server, serverServer)
+	loadReportingServiceServer := ProvideLRSServer(statsIntervalSeconds)
+	sideEffectLRSRegistered := ProvideSideEffectLRSRegistered(server, loadReportingServiceServer)
+	xdsAllSideEffects := XdsAllSideEffects{
+		_ADS: sideEffectADSRegistered,
+		_EDS: sideEffectEDSRegistered,
+		_CDS: sideEffectCDSRegistered,
+		_RDS: sideEffectRDSRegistered,
+		_LDS: sideEffectLDSRegistered,
+		_LRS: sideEffectLRSRegistered,
+	}
+	devServer := DevServer{
+		_Xds:       xdsAllSideEffects,
+		GrpcServer: server,
+	}
+	testServer := TestServer{
+		DevServer: devServer,
+		Server:    serverServer,
+	}
+	return testServer, func() {
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
 // wire.go:
 
 type Servers struct {
+	DevServer
+
 	_GrpcHealth SideEffectGrpcHealthRegistered
-	_Xds        XdsAllSideEffects
 	_Reflection SideEffectGrpcReflectionRegistered
 	_Channelz   SideEffectGrpcChannelzRegistered
 
-	GrpcServer  *grpc.Server
 	DebugServer *debug.Server
+}
+
+type DevServer struct {
+	_Xds       XdsAllSideEffects
+	GrpcServer *grpc.Server
 }

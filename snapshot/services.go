@@ -37,10 +37,10 @@ func (s *Snapshotter) startServices(ctx context.Context) error {
 	}, k8scache.DeletionHandlingMetaNamespaceKeyFunc)
 
 	reflector := k8scache.NewReflector(&k8scache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+		ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
 			return s.client.CoreV1().Services("").List(ctx, options)
 		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+		WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
 			return s.client.CoreV1().Services("").Watch(ctx, options)
 		},
 	}, &corev1.Service{}, store, s.ResyncPeriod)

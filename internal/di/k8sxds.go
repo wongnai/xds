@@ -22,7 +22,7 @@ var K8sXdsSet = wire.NewSet(
 	ProvideLRSServer,
 )
 
-func ProvideSnapshotter(ctx context.Context, k8sClient *kubernetes.Clientset) (*snapshot.Snapshotter, func()) {
+func ProvideSnapshotter(ctx context.Context, k8sClient kubernetes.Interface) (*snapshot.Snapshotter, func()) {
 	stopCtx, stop := context.WithCancel(ctx)
 	snapshotter := snapshot.New(k8sClient)
 
