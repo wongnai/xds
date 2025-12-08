@@ -53,11 +53,6 @@ make
 This use your local kubeconfig, so if `kubectl` works then it should work, unless you use some sort of authentication
 plugin.
 
-## xDS Idle
-
-There's [an issue](https://github.com/envoyproxy/go-control-plane/issues/431) with the underlying library. When using
-newer gRPC client libraries you'll need to disable idle timeout, or xDS will stop distributing hosts after some time.
-
 ## Features
 
 ### Retry Policy

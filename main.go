@@ -21,6 +21,8 @@ func main() {
 	flag.CommandLine.Int64Var(&statsIntervalInSeconds, "statsinterval", 300, "stats update interval in seconds")
 	flag.Parse()
 
+	ctx := context.Background()
+
 	meter.InstallPromExporter()
 
 	servers, stop, err := di.InitializeServer(context.Background(), statsIntervalInSeconds)
@@ -28,7 +30,8 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	lis, err := net.Listen("tcp", ":5000") //nolint:gosec // We're not using TLS
+	lc := net.ListenConfig{}
+	lis, err := lc.Listen(ctx, "tcp", ":5000") //nolint:gosec // We're not using TLS
 	if err != nil {
 		klog.Fatal(err)
 	}

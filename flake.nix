@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.05";
+    nixpkgs.url = "nixpkgs/nixos-25.11";
     gitignore = {
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,7 +20,7 @@
           src = gitignore.lib.gitignoreSource ./.;
           # To update this, set the value to `lib.fakeHash` then build with `nix build '.#'`
           # Nix will tell you the correct value.
-          vendorHash = "sha256-1/5X4eNf/nKiRxjcmNu7AbU1KYn/MppCdEH671TclLE=";
+          vendorHash = "sha256-47YT2X6hdIaAXrx0AG4R2nkNG5S89X/rH5CByEe7ztQ=";
         };
         container = pkgs.dockerTools.buildLayeredImage {
           name = "xds";

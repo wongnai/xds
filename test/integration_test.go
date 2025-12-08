@@ -38,7 +38,8 @@ type XdsIntegrationTestSuite struct {
 }
 
 func (s *XdsIntegrationTestSuite) SetupSuite() {
-	listener, err := net.Listen("tcp", xdsServerBind)
+	lc := net.ListenConfig{}
+	listener, err := lc.Listen(s.T().Context(), "tcp", xdsServerBind)
 	s.Require().NoError(err)
 	s.listener = listener
 

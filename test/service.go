@@ -19,7 +19,8 @@ type FakeService struct {
 
 func NewFakeService(addr string) (*FakeService, error) {
 	server := grpc.NewServer()
-	listener, err := net.Listen("tcp", addr)
+	lc := net.ListenConfig{}
+	listener, err := lc.Listen(context.Background(), "tcp", addr)
 	if err != nil {
 		return nil, err
 	}
