@@ -1,5 +1,5 @@
 # Install specific version of golangci-lint
-version: v1.64.8
+version: v2.7.2
 name: golangci-lint
 destination: .bin
 
