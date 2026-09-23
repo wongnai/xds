@@ -29,7 +29,7 @@ The goal of this xDS server is to only solve gRPC load balancing. The design is 
 The server is available as a Docker image on `ghcr.io/wongnai/xds:master`. (or any tagged versions)
 
 If you're running in cluster it should also work without any environment variables. It requires some read-only
-access, which you can find the ClusterRole in [deploy.yml](deploy.yml). It is recommended to deploy this as headless
+access, which you can find the ClusterRole in [clusterrole.yml](clusterrole.yml). It is recommended to deploy this as headless
 service. As it use DNS-based discovery, we recommend not to use autoscaling on this service but keep it always at max
 pods.
 
